@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Simulação de Tráfego Baseada na Tabela</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <h2>Simulação de Tráfego Baseada na Tabela</h2>
+  <canvas id="graficoTrafego" width="800" height="400"></canvas>
+
+  <script>
+    function calcularTrafego(dias, listaDePicos) {
+      const trafego = [];
+      const trafegoInicial = 100;
+      const aumentoNormal = 10;
+      const duracaoPico = 3;
+
+      for (let dia = 0; dia < dias; dia++) {
+        // Verifica se está em pico
+        const picoAtual = listaDePicos.find(pico => dia >= pico && dia < pico + duracaoPico);
+
+        if (picoAtual !== undefined) {
+          // Durante pico, o tráfego inicia sempre em 100 e dobra a cada dia do pico
+          const m = dia - picoAtual;
+          trafego.push(trafegoInicial * Math.pow(2, m));
+        } else {
+          // Fora de pico
+
+          if (dia === 0) {
+            trafego.push(trafegoInicial);
+          } else {
+            // Se dia anterior foi pico, então pega último valor do pico e soma 10
+            const diaAnterior = dia - 1;
+            const picoDiaAnterior = listaDePicos.find(pico => diaAnterior >= pico && diaAnterior < pico + duracaoPico);
+
+            if (picoDiaAnterior !== undefined) {
+              const valorAnterior = trafego[diaAnterior];
+              trafego.push(valorAnterior + aumentoNormal);
+            } else {
+              // Se dia anterior não foi pico, incremento normal da PA (10 GB por dia) a partir do dia 0
+              trafego.push(trafegoInicial + aumentoNormal * dia);
+            }
+          }
+        }
+      }
+      return trafego;
+    }
+
+    const diasTotal = 10;
+    const picos = [3, 7];
+
+    const trafegoDiario = calcularTrafego(diasTotal, picos);
+
+    trafegoDiario.forEach((valor, dia) => {
+      console.log(`Dia ${dia}: ${valor} GB`);
+    });
+
+    // Gráfico com Chart.js
+    const ctx = document.getElementById('graficoTrafego').getContext('2d');
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: trafegoDiario.map((_, i) => `Dia ${i}`),
+        datasets: [{
+          label: 'Tráfego de Dados (GB)',
+          data: trafegoDiario,
+          borderColor: 'blue',
+          backgroundColor: 'rgba(0, 0, 255, 0.1)',
+          borderWidth: 2,
+          pointRadius: 5,
+          fill: true,
+          tension: 0.2
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          title: {
+            display: true,
+            text: 'Simulação de Tráfego Baseada na Tabela'
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            title: {
+              display: true,
+              text: 'Tráfego (GB)'
+            }
+          },
+          x: {
+            title: {
+              display: true,
+              text: 'Dias'
+            }
+          }
+        }
+      }
+    });
+  </script>
+</body>
+</html>
